@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Photo Sheet Maker</title>
+<link rel="icon" href="Cheerful_Capybara_Leaf_Badge_Logo.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--acc:#4f46e5;--acc2:#7c3aed;--field:#f8fafc}
+:root[data-theme=dark]{--bg:#0b1020;--card:#151b2e;--text:#e5e7eb;--muted:#94a3b8;--line:#263049;--acc:#6366f1;--acc2:#8b5cf6;--field:#0f1526}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);padding-bottom:84px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px clamp(12px,3vw,28px);background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff}
+.logo{height:clamp(52px,9vw,72px);width:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}
+.icon-btn{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:.85rem}
+.app{display:grid;gap:16px;padding:clamp(12px,3vw,28px);max-width:1300px;margin:0 auto}
+@media(min-width:960px){.app{grid-template-columns:360px 1fr;align-items:start}.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+.drop{display:block;border:2px dashed var(--line);border-radius:12px;padding:22px 12px;text-align:center;cursor:pointer;color:var(--muted);transition:.15s}
+.drop.over,.drop:hover{border-color:var(--acc);background:var(--field);color:var(--text)}
+.drop b{display:block;color:var(--text);margin-bottom:4px}
+.drop input{display:none}
+.thumb{display:none;flex-direction:column;align-items:center;gap:8px;margin-top:10px;font-size:.78rem;color:var(--muted);text-align:center}
+.thumb img{width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid var(--line);background:var(--field)}
+label.l{display:block;font-size:.75rem;color:var(--muted);margin:0 0 4px}
+input[type=number],select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--field);color:var(--text);font-size:16px}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.sizes .s{display:grid;grid-template-columns:1fr 92px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.sizes .s:last-child{border:0}
+.sizes .name{font-weight:600;font-size:.9rem}
+.sizes .name span{display:block;font-weight:400;font-size:.72rem;color:var(--muted)}
+.cust{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.seg{display:flex;gap:6px}
+.seg button,.btn{padding:10px;border:1px solid var(--line);background:var(--field);color:var(--text);border-radius:9px;cursor:pointer;font-size:.85rem}
+.seg button{flex:1}
+.seg button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.primary{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:0;font-weight:600;padding:12px 18px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.chk{display:flex;align-items:center;gap:8px;font-size:.85rem;margin:6px 0}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.stage{min-width:0}
+.bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:.85rem;color:var(--muted)}
+#preview{display:flex;flex-direction:column;align-items:center;gap:16px}
+.empty{padding:60px 16px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:14px;width:100%}
+.page{position:relative;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.25);flex:none;overflow:hidden}
+.page .mg{position:absolute;border:1px dashed #cbd5e1;pointer-events:none}
+.page img{position:absolute;display:block;object-fit:cover;max-width:none}
+.page img.g{outline:1px solid #94a3b8;outline-offset:-1px}
+.pn{position:absolute;right:4px;bottom:2px;font-size:10px;color:#94a3b8}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.sw.on{outline:3px solid var(--acc);outline-offset:2px}
+.sw.custom{position:relative;overflow:hidden;background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.sw.custom input{opacity:0;position:absolute;inset:0;width:100%;height:100%;cursor:pointer;border:0;padding:0}
+.actions{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;padding:10px clamp(12px,3vw,28px);background:var(--card);border-top:1px solid var(--line);z-index:5}
+.actions .btn{flex:1}
+@media(min-width:960px){.actions{left:auto;right:28px;bottom:20px;width:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.2)}.actions .btn{flex:none}}
+</style>
+</head>
+<body>
+<header>
+  <img class="logo" src="/Cheerful Capybara Leaf Badge Logo.png" alt="Photo Sheet Maker logo">
+  <button class="icon-btn" id="theme" type="button">Dark mode</button>
+</header>
+
+<main class="app">
+<aside class="side">
+  <section class="card">
+    <h2>1 · Picture</h2>
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="image/*">
+      <b>Tap to upload or drop a picture</b>
+      <span>You can also paste (Ctrl/Cmd + V)</span>
+    </label>
+    <div class="thumb" id="thumb"><img id="thumbImg" alt="Uploaded picture"><span id="thumbInfo"></span></div>
+  </section>
+
+  <section class="card sizes">
+    <h2>2 · Sizes &amp; copies</h2>
+    <div class="s"><div class="name">2×2 in<span>ID / profile</span></div><input type="number" id="n2" value="4" min="0" max="200"></div>
+    <div class="s"><div class="name">1×1 in<span>small ID</span></div><input type="number" id="n1" value="8" min="0" max="500"></div>
+    <div class="s"><div class="name">1.5×1.5 in<span>medium</span></div><input type="number" id="n15" value="0" min="0" max="300"></div>
+    <div class="s" style="grid-template-columns:1fr"><div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="name">Custom size<span>inches (e.g. 1.38×1.77 passport)</span></div>
+      <input type="number" id="nc" value="0" min="0" max="300" style="width:92px"></div>
+      <div class="cust"><div><label class="l">Width (in)</label><input type="number" id="cw" value="1.38" step="0.01" min="0.3" max="8"></div>
+      <div><label class="l">Height (in)</label><input type="number" id="ch" value="1.77" step="0.01" min="0.3" max="11"></div></div>
+    </div></div>
+    <button class="btn" id="fill" type="button" style="width:100%;margin-top:8px">Auto-fill one page with 1×1</button>
+  </section>
+
+  <section class="card">
+    <h2>3 · Layout</h2>
+    <label class="l">Alignment</label>
+    <div class="seg" id="align" style="margin-bottom:10px">
+      <button type="button" data-a="left">Left</button><button type="button" data-a="center" class="on">Center</button><button type="button" data-a="right">Right</button>
+    </div>
+    <div class="row">
+      <div><label class="l">Paper</label>
+        <select id="paper">
+          <option value="8.5,11">Letter 8.5×11</option><option value="8.27,11.69">A4</option>
+          <option value="8.5,14">Legal 8.5×14</option><option value="5.83,8.27">A5</option>
+          <option value="5,7">5R 5×7</option><option value="4,6">4R 4×6</option>
+        </select></div>
+      <div><label class="l">Gap between photos (in)</label><input type="number" id="gap" value="0" step="0.05" min="0" max="0.5"></div>
+    </div>
+    <div class="chk"><input type="checkbox" id="guides" checked><label for="guides">Cut guide lines</label></div>
+    <div class="chk"><input type="checkbox" id="landscape"><label for="landscape">Landscape paper</label></div>
+    <p style="font-size:.72rem;color:var(--muted);margin:6px 0 10px">Margin is fixed at 0.1 in.</p>
+    <button class="btn" id="reset" type="button" style="width:100%">Reset settings</button>
+  </section>
+
+  <section class="card">
+    <h2>4 · Background</h2>
+    <label class="l">Sheet (paper) background</label>
+    <div class="swatches" id="sheetBg"></div>
+    <label class="l">Photo background <span style="opacity:.8">(fills transparent areas of PNG photos)</span></label>
+    <div class="swatches" id="photoBg"></div>
+  </section>
+</aside>
+
+<section class="stage">
+  <div class="bar"><span id="info">No picture yet</span><span>Preview scales to your screen</span></div>
+  <div id="preview"><div class="empty">Upload a picture to see your photo sheet here.</div></div>
+</section>
+</main>
+
+<div class="actions">
+  <button class="btn primary" id="save" type="button" disabled>Save as PDF</button>
+  <button class="btn" id="savePng" type="button" disabled>Save page as PNG</button>
+</div>
+
+<script>
+(function(){
+var M=0.1, DPI=300, $=function(i){return document.getElementById(i)};
+var sheetColor='#ffffff', photoColor='#ffffff', hasAlpha=false;
+var src=null, rot=0, orig=null, align='center', name='photo';
+var DEFAULTS={n2:4,n1:8,n15:0,nc:0,cw:1.38,ch:1.77,gap:0};
+
+function paper(){var p=$('paper').value.split(',').map(parseFloat);
+  return $('landscape').checked?{w:p[1],h:p[0]}:{w:p[0],h:p[1]}}
+function num(id,d){var v=parseFloat($(id).value);return isNaN(v)?d:v}
+
+function sizes(){
+  return [{w:2,h:2,n:num('n2',0)},{w:1,h:1,n:num('n1',0)},{w:1.5,h:1.5,n:num('n15',0)},
+          {w:Math.max(.3,num('cw',1)),h:Math.max(.3,num('ch',1)),n:num('nc',0)}]
+    .filter(function(s){return s.n>0}).sort(function(a,b){return b.h-a.h});
+}
+
+function layout(){
+  var P=paper(),uw=P.w-2*M,bot=P.h-M,gap=Math.min(.5,Math.max(0,num('gap',0)));
+  var pages=[[]],y=M;
+  sizes().forEach(function(s){
+    if(s.w>uw+1e-9||s.h>P.h-2*M+1e-9)return;
+    var per=Math.max(1,Math.floor((uw+gap+1e-9)/(s.w+gap))),left=Math.floor(s.n);
+    while(left>0){
+      if(y+s.h>bot+1e-9){pages.push([]);y=M}
+      var k=Math.min(per,left),rw=k*s.w+(k-1)*gap;
+      var x0=align==='left'?M:align==='right'?P.w-M-rw:M+(uw-rw)/2;
+      for(var i=0;i<k;i++)pages[pages.length-1].push({x:x0+i*(s.w+gap),y:y,w:s.w,h:s.h});
+      left-=k;y+=s.h+gap;
+    }
+  });
+  return{P:P,pages:pages};
+}
+
+function render(){
+  var box=$('preview');box.innerHTML='';
+  if(!src){box.innerHTML='<div class="empty">Upload a picture to see your photo sheet here.</div>';$('info').textContent='No picture yet';return}
+  var L=layout(),avail=Math.max(200,box.clientWidth-4),S=Math.min(110,avail/L.P.w);
+  var g=$('guides').checked,total=0;
+  L.pages.forEach(function(items,pi){
+    var pg=document.createElement('div');pg.className='page';
+    pg.style.background=sheetColor;pg.style.width=L.P.w*S+'px';pg.style.height=L.P.h*S+'px';
+    var m=document.createElement('div');m.className='mg';
+    m.style.cssText='left:'+M*S+'px;top:'+M*S+'px;right:'+M*S+'px;bottom:'+M*S+'px';pg.appendChild(m);
+    items.forEach(function(it){
+      var e=document.createElement('img');e.src=orig;e.alt='';e.draggable=false;
+      if(g)e.className='g';
+      e.style.cssText='left:'+it.x*S+'px;top:'+it.y*S+'px;width:'+it.w*S+'px;height:'+it.h*S+'px;object-position:50% 50%;background-color:'+photoColor;
+      pg.appendChild(e);total++;
+    });
+    var n=document.createElement('div');n.className='pn';n.textContent=(pi+1)+'/'+L.pages.length;pg.appendChild(n);
+    box.appendChild(pg);
+  });
+  $('info').textContent=total+' photo'+(total===1?'':'s')+' · '+L.pages.length+' page'+(L.pages.length===1?'':'s')+' · '+L.P.w+'×'+L.P.h+' in';
+}
+
+function crop(w,h,pxPerIn){
+  var cw=Math.round(w*pxPerIn),ch=Math.round(h*pxPerIn),c=document.createElement('canvas');
+  c.width=cw;c.height=ch;
+  var sw=src.width,sh=src.height,r=w/h,cwS,chS;
+  if(sw/sh>r){chS=sh;cwS=sh*r}else{cwS=sw;chS=sw/r}
+  var sx=(sw-cwS)/2,sy=(sh-chS)/2,x=c.getContext('2d');
+  x.imageSmoothingQuality='high';x.fillStyle=photoColor;x.fillRect(0,0,cw,ch);
+  x.drawImage(src,sx,sy,cwS,chS,0,0,cw,ch);return c;
+}
+
+function savePDF(){
+  if(!src)return;
+  var L=layout(),J=window.jspdf&&window.jspdf.jsPDF;
+  if(!J){alert('PDF library did not load. Please check your internet connection and reload.');return}
+  var d=new J({unit:'in',format:[L.P.w,L.P.h],orientation:L.P.w>L.P.h?'l':'p'}),cache={},g=$('guides').checked;
+  L.pages.forEach(function(items,i){
+    if(i)d.addPage([L.P.w,L.P.h],L.P.w>L.P.h?'l':'p');
+    var rc=rgb(sheetColor);d.setFillColor(rc[0],rc[1],rc[2]);d.rect(0,0,L.P.w,L.P.h,'F');
+    items.forEach(function(it){
+      var k=it.w+'x'+it.h;
+      if(!cache[k])cache[k]=crop(it.w,it.h,DPI).toDataURL('image/jpeg',.95);
+      d.addImage(cache[k],'JPEG',it.x,it.y,it.w,it.h);
+      if(g){d.setDrawColor(148,163,184);d.setLineWidth(.005);d.rect(it.x,it.y,it.w,it.h)}
+    });
+  });
+  d.save(name+'-sheet.pdf');
+}
+
+function savePNG(){
+  if(!src)return;
+  var L=layout(),c=document.createElement('canvas');
+  c.width=Math.round(L.P.w*DPI);c.height=Math.round(L.P.h*DPI);
+  var x=c.getContext('2d'),cache={};x.fillStyle=sheetColor;x.fillRect(0,0,c.width,c.height);
+  L.pages[0].forEach(function(it){
+    var k=it.w+'x'+it.h;if(!cache[k])cache[k]=crop(it.w,it.h,DPI);
+    x.drawImage(cache[k],Math.round(it.x*DPI),Math.round(it.y*DPI));
+    if($('guides').checked){x.strokeStyle='#94a3b8';x.lineWidth=2;x.strokeRect(it.x*DPI,it.y*DPI,it.w*DPI,it.h*DPI)}
+  });
+  var a=document.createElement('a');a.download=name+'-sheet.png';a.href=c.toDataURL('image/png');a.click();
+}
+
+function rebuild(img){
+  var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height,k=Math.min(1,3000/Math.max(w,h));
+  var odd=rot%2===1,cw=Math.round((odd?h:w)*k),ch=Math.round((odd?w:h)*k);
+  var c=document.createElement('canvas');c.width=cw;c.height=ch;var x=c.getContext('2d');
+  x.translate(cw/2,ch/2);x.rotate(rot*Math.PI/2);
+  x.drawImage(img,-w*k/2,-h*k/2,w*k,h*k);
+  src=c;orig=hasAlpha?c.toDataURL('image/png'):c.toDataURL('image/jpeg',.92);
+  $('thumb').style.display='flex';$('thumbImg').src=orig;
+  $('thumbInfo').textContent=name+' · '+w+'×'+h+' px';
+  $('save').disabled=$('savePng').disabled=false;render();
+}
+var base=null;
+function load(f){
+  if(!f||f.type.indexOf('image')!==0)return;
+  hasAlpha=/png|webp|gif|svg/.test(f.type);
+  name=(f.name||'photo').replace(/\.[^.]+$/,'')||'photo';
+  var u=URL.createObjectURL(f),im=new Image();
+  im.onload=function(){base=im;rot=0;rebuild(im);URL.revokeObjectURL(u)};
+  im.src=u;
+}
+
+$('file').addEventListener('change',function(e){load(e.target.files[0])});
+var dz=$('drop');
+['dragenter','dragover'].forEach(function(t){dz.addEventListener(t,function(e){e.preventDefault();dz.classList.add('over')})});
+['dragleave','drop'].forEach(function(t){dz.addEventListener(t,function(e){e.preventDefault();dz.classList.remove('over')})});
+dz.addEventListener('drop',function(e){load(e.dataTransfer.files[0])});
+document.addEventListener('paste',function(e){
+  var it=(e.clipboardData||{}).items||[];
+  for(var i=0;i<it.length;i++)if(it[i].type.indexOf('image')===0){load(it[i].getAsFile());break}
+});
+
+['n2','n1','n15','nc','cw','ch','gap','paper','guides','landscape'].forEach(function(id){
+  $(id).addEventListener('input',render);$(id).addEventListener('change',render);
+});
+document.querySelectorAll('#align button').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('#align button').forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on');align=b.dataset.a;render();
+  });
+});
+$('reset').addEventListener('click',function(){
+  Object.keys(DEFAULTS).forEach(function(k){$(k).value=DEFAULTS[k]});
+  $('paper').selectedIndex=0;$('guides').checked=true;$('landscape').checked=false;
+  sheetColor=photoColor='#ffffff';drawSheet();drawPhoto();render();
+});
+$('fill').addEventListener('click',function(){
+  var n=0;$('n1').value=0;
+  while(n<500){$('n1').value=n+1;if(layout().pages.length>1){break}n++}
+  $('n1').value=n;render();
+});
+function rgb(h){return[1,3,5].map(function(i){return parseInt(h.substr(i,2),16)})}
+var PRESETS=[['#ffffff','White'],['#1e5bd6','Blue'],['#d32f2f','Red'],['#2e9e5b','Green'],['#f1f5f9','Light gray'],['#000000','Black']];
+function swatches(id,get,set){
+  var box=$(id);
+  function draw(){
+    box.innerHTML='';var isPreset=false;
+    PRESETS.forEach(function(p){
+      var b=document.createElement('button');b.type='button';b.className='sw';b.title=p[1];b.setAttribute('aria-label',p[1]);
+      b.style.background=p[0];
+      if(get()===p[0]){b.classList.add('on');isPreset=true}
+      b.addEventListener('click',function(){set(p[0]);draw();render()});
+      box.appendChild(b);
+    });
+    var c=document.createElement('label');c.className='sw custom'+(isPreset?'':' on');c.title='Custom color';
+    var i=document.createElement('input');i.type='color';i.value=get();
+    i.addEventListener('input',function(){
+      set(i.value);c.classList.add('on');
+      box.querySelectorAll('button.sw.on').forEach(function(x){x.classList.remove('on')});
+      render();
+    });
+    c.appendChild(i);box.appendChild(c);
+  }
+  draw();return draw;
+}
+var drawSheet=swatches('sheetBg',function(){return sheetColor},function(v){sheetColor=v});
+var drawPhoto=swatches('photoBg',function(){return photoColor},function(v){photoColor=v});
+$('save').addEventListener('click',savePDF);
+$('savePng').addEventListener('click',savePNG);
+
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);$('theme').textContent=t==='dark'?'Light mode':'Dark mode'}
+setTheme(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+$('theme').addEventListener('click',function(){
+  setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+});
+var t;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(render,80)});
+})();
+</script>
+</body>
+</html>
